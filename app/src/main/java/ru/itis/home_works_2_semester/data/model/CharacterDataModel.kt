@@ -1,8 +1,10 @@
 package ru.itis.home_works_2_semester.data.model
 
 import android.os.Parcelable
+import androidx.compose.runtime.Immutable
 import kotlinx.parcelize.Parcelize
 
+@Immutable
 @Parcelize
 data class CharacterDataModel(
     val remoteId: Long,
@@ -22,4 +24,3 @@ data class CharacterDataModel(
         )
     }
 }
-

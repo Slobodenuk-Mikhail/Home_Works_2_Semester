@@ -1,6 +1,7 @@
 // SearchViewModel.kt
 package ru.itis.home_works_2_semester.presentation.viewmodel
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -10,45 +11,53 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.itis.home_works_2_semester.ServiceLocator
 import ru.itis.home_works_2_semester.data.model.CharacterModel
 import ru.itis.home_works_2_semester.domain.usecase.SearchCharactersByNameUseCase
 import kotlin.reflect.KClass
 
+@Immutable
+data class SearchUiState(
+    val query: String = "",
+    val characterList: List<CharacterModel> = emptyList(),
+    val isLoading: Boolean = false,
+    val error: String? = null
+)
+
 class SearchViewModel(
     private val searchCharactersByNameUseCase: SearchCharactersByNameUseCase,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val _characterList = MutableStateFlow<List<CharacterModel>>(emptyList())
-    val characterList: StateFlow<List<CharacterModel>> = _characterList.asStateFlow()
-
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error.asStateFlow()
+    private val _uiState = MutableStateFlow(SearchUiState())
+    val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
 
     init {
-        // Восстановление сохранённого списка
-        savedStateHandle.get<List<CharacterModel>>("charList")?.let {
-            _characterList.value = it
-        }
+        // Восстановление сохранённого списка и запроса
+        val list = savedStateHandle.get<List<CharacterModel>>("charList") ?: emptyList()
+        val query = savedStateHandle.get<String>("query") ?: ""
+        _uiState.update { it.copy(characterList = list, query = query) }
     }
 
-    fun searchCharacters(name: String) {
+    fun onQueryChanged(newQuery: String) {
+        _uiState.update { it.copy(query = newQuery) }
+        savedStateHandle["query"] = newQuery
+    }
+
+    fun searchCharacters() {
+        val name = _uiState.value.query
+        if (name.isBlank()) return
+
         viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
+            _uiState.update { it.copy(isLoading = true, error = null) }
             try {
                 val result = searchCharactersByNameUseCase(name)
-                _characterList.value = result
+                _uiState.update { it.copy(characterList = result, isLoading = false) }
                 savedStateHandle["charList"] = result
             } catch (e: Exception) {
-                _error.value = e.message ?: "Unknown error"
-            } finally {
-                _isLoading.value = false
+                _uiState.update { it.copy(error = e.message ?: "Unknown error", isLoading = false) }
             }
         }
     }

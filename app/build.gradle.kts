@@ -9,9 +9,7 @@ plugins {
 
 android {
     namespace = "ru.itis.home_works_2_semester"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "ru.itis.home_works_2_semester"
@@ -58,6 +56,8 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network)
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
     implementation(libs.retrofit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
