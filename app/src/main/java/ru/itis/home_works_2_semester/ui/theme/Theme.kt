@@ -9,12 +9,21 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = PortalGreen,
+    onPrimary = DarkBackground,
+    secondary = SciFiBlue,
+    onSecondary = DarkBackground,
+    tertiary = NeonGreen,
+    background = DarkBackground,
+    surface = DarkSurface,
+    onBackground = PortalGreen,
+    onSurface = PortalGreen,
+    error = Color(0xFFCF6679),
+    onError = DarkBackground
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -35,9 +44,8 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun Home_Works_2_SemesterTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    darkTheme: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -45,14 +53,13 @@ fun Home_Works_2_SemesterTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = SciFiTypography,
         content = content
     )
 }

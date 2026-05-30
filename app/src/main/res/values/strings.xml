@@ -1,3 +1,18 @@
 <resources>
     <string name="app_name">Home_Works_2_Semester</string>
+
+    <string name="error_prefix">ERROR: %s</string>
+    <string name="error_404">Couldnt find a character with that name</string>
+    <string name="error_5xx">Server error, please wait or update the application</string>
+
+<!--Search Screen-->
+    <string name="search_button">SEARCH</string>
+    <string name="no_data">No data</string>
+    <string name="search_text_field_label">ENTER CHARACTER NAME</string>
+
+<!--Info Screen-->
+    <string name="back_to_list">BACK TO LIST</string>
+    <string name="status_label">STATUS:</string>
+    <string name="species_label">SPECIES:</string>
+    <string name="gender_label">GENDER:</string>
 </resources>
