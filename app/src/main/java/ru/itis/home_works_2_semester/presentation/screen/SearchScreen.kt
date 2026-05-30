@@ -29,6 +29,7 @@ import ru.itis.home_works_2_semester.ui.theme.NeonGreen
 import ru.itis.home_works_2_semester.ui.theme.PortalGreen
 import ru.itis.home_works_2_semester.utils.ResManager
 import ru.itis.home_works_2_semester.R
+import ru.itis.home_works_2_semester.data.model.CharacterModel
 
 
 @Composable
@@ -37,11 +38,7 @@ fun SearchScreen(
     viewModel: SearchViewModel,
     resManager: ResManager
 ) {
-    val characterList by viewModel.characterList.collectAsStateWithLifecycle()
-    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
-    val error by viewModel.error.collectAsStateWithLifecycle()
-
-    var query by remember { mutableStateOf("") }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
         modifier = Modifier
@@ -57,8 +54,8 @@ fun SearchScreen(
         ) {
             // Поле ввода
             OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
+                value = uiState.query,
+                onValueChange = { viewModel.onQueryChanged(it) },
                 label = { Text(resManager.getString(R.string.search_text_field_label), style = MaterialTheme.typography.labelLarge) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -75,12 +72,10 @@ fun SearchScreen(
             // Кнопка поиска
             Button(
                 onClick = {
-                    if (query.isNotBlank()) {
-                        viewModel.searchCharacters(query)
-                    }
+                    viewModel.searchCharacters()
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = query.isNotBlank(),
+                enabled = uiState.query.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.Transparent,
                     contentColor = PortalGreen
@@ -99,78 +94,95 @@ fun SearchScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             when {
-                isLoading -> CircularProgressIndicator(
+                uiState.isLoading -> CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                     color = NeonGreen
                 )
 
-                error != null -> when {
-                    "404" in error!! -> Text(resManager.getString(R.string.error_404))
-                    "50" in error!! -> Text(resManager.getString(R.string.error_5xx))
+                uiState.error != null -> when {
+                    "404" in uiState.error!! -> Text(resManager.getString(R.string.error_404))
+                    "50" in uiState.error!! -> Text(resManager.getString(R.string.error_5xx))
                     else -> Text(
-                        text = resManager.getString(R.string.error_prefix, error ?: ""),
+                        text = resManager.getString(R.string.error_prefix, uiState.error ?: ""),
                         color = MaterialTheme.colorScheme.error,
                         modifier = Modifier.padding(16.dp),
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
 
-                else -> LazyColumn {
-                    items(characterList) { character ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp)
-                                .clickable {
-                                    navController.navigate(InfoScreenObject.createRoute(character.id))
-                                }
-                                .shadow(8.dp, RoundedCornerShape(12.dp))
-                                .border(
-                                    width = 1.dp,
-                                    color = NeonGreen,
-                                    shape = RoundedCornerShape(12.dp)
-                                ),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surface
-                            )
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Image(
-                                    painter = rememberAsyncImagePainter(character.image),
-                                    contentDescription = character.name,
-                                    modifier = Modifier
-                                        .size(56.dp)
-                                        .clip(CircleShape)
-                                        .border(2.dp, NeonGreen, CircleShape),
-                                    contentScale = ContentScale.Crop
-                                )
-
-                                Spacer(modifier = Modifier.width(16.dp))
-
-                                Text(
-                                    text = character.name,
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        letterSpacing = 0.5.sp
-                                    ),
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Text(
-                                    text = ">>",
-                                    color = NeonGreen,
-                                    style = MaterialTheme.typography.labelLarge
-                                )
+                else -> LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(
+                        items = uiState.characterList,
+                        key = { it.id }
+                    ) { character ->
+                        CharacterItem(
+                            character = character,
+                            onClick = {
+                                navController.navigate(InfoScreenObject.createRoute(character.id))
                             }
-                        }
+                        )
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun CharacterItem(
+    character: CharacterModel,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .shadow(8.dp, RoundedCornerShape(12.dp))
+            .border(
+                width = 1.dp,
+                color = NeonGreen,
+                shape = RoundedCornerShape(12.dp)
+            ),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = rememberAsyncImagePainter(character.image),
+                contentDescription = character.name,
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .border(2.dp, NeonGreen, CircleShape),
+                contentScale = ContentScale.Crop
+            )
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Text(
+                text = character.name,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.5.sp
+                ),
+                modifier = Modifier.weight(1f)
+            )
+            Text(
+                text = ">>",
+                color = NeonGreen,
+                style = MaterialTheme.typography.labelLarge
+            )
         }
     }
 }
