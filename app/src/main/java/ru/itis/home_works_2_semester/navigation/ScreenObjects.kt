@@ -6,6 +6,9 @@ import kotlinx.serialization.Serializable
 data object SearchScreenObject {const val route = "search"}
 
 @Serializable
+data object ChartScreenObject {const val route = "chart"}
+
+@Serializable
 data object InfoScreenObject {
     const val route = "info/{id}"
     fun createRoute(id: Long) = "info/$id"
